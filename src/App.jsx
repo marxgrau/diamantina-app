@@ -345,7 +345,20 @@ export default function App(){
         <div style={{background:t.card,padding:"10px 14px",borderBottom:`1px solid ${t.border}`}}>
           <button style={{background:t.blue,border:"none",color:"#fff",borderRadius:10,
             padding:"12px 20px",fontSize:13,fontWeight:700,cursor:"pointer",width:"100%"}}
-            onClick={()=>window.print()}>🖨️ Imprimir / Guardar PDF</button>
+            onClick={()=>{
+              const content = document.getElementById('report-content');
+              if(content){
+                const w = window.open('','_blank');
+                w.document.write('<html><head><title>Reporte Diamantina</title><style>');
+                w.document.write('*{box-sizing:border-box;} body{margin:8mm;font-family:Arial,sans-serif;font-size:9px;} table{border-collapse:collapse;width:100%;} th,td{border:0.5px solid #999;padding:2px 4px;font-size:8px;} th{background:#ddd;font-weight:bold;text-align:center;} .header-row{display:flex;} .logo-box{padding:6px;min-width:120px;border-right:1px solid #999;background:#eee;} .title-box{flex:1;display:flex;align-items:center;justify-content:center;padding:6px;border-right:1px solid #999;} .title-box h1{font-size:11px;text-align:center;margin:0;} .code-box{padding:4px;min-width:70px;font-size:8px;text-align:right;background:#eee;} .data-row{display:flex;border-left:1px solid #999;border-right:1px solid #999;border-bottom:1px solid #999;} .data-field{flex:1;padding:2px 6px;border-right:1px solid #999;} .sec-h{background:#ccc;font-weight:bold;font-size:8px;padding:2px 6px;border:1px solid #999;margin-top:3px;} .two-col{display:flex;gap:3px;margin-top:3px;} .obs{border:1px solid #999;padding:4px;min-height:30px;font-size:8px;} .firmas{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px;} .firma{text-align:center;} .firma-line{border-bottom:1px solid #000;margin-bottom:3px;height:20px;} @page{size:A4;margin:8mm;}');
+                w.document.write('</style></head><body>');
+                w.document.write(content.innerHTML);
+                w.document.write('</body></html>');
+                w.document.close();
+                w.focus();
+                setTimeout(()=>{w.print();w.close();},500);
+              }
+            }}>🖨️ Imprimir / Guardar PDF</button>
         </div>
 
         <div style={{padding:"10px",background:t.bg}} id="report-content">

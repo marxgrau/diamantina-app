@@ -97,8 +97,8 @@ export default function App(){
         // Primer tubo del turno - sobrante YA viene del turno anterior, NO tocar
         curSob=sobIniVal;
       } else if(prevN!==null){
-        // Cambio de tubo dentro del mismo turno - suma/resta diferencia
-        curSob=prevSob!=null?+(prevSob+add*TUBE).toFixed(2):curSob;
+        // Cambio de tubo dentro del mismo turno - suma diferencia al sobrante actual
+        curSob=curSob!=null?+(curSob+add*TUBE).toFixed(2):curSob;
       } else {
         // Primer turno sin sobranteIni - calcular normalmente
         curSob=tub!=null?+(tub-cte).toFixed(2):null;

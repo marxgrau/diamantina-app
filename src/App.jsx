@@ -78,42 +78,73 @@ export default function App(){
   const reset=()=>{if(window.confirm("¿Limpiar todo?")){uid=1;setH(emptyH);setRows([row(),row(),row()]);setBarrel("5");setTab("calc");}};
 
   // ── Compute rows ───────────────────────────────────────────────────
+  // ── VALORES INICIALES DEL TURNO ────────────────────────────────
   const profIniVal = parseFloat(h.profIni)||0;
-  const sobIniVal = parseFloat(h.sobranteIni)||null;
-  // Suggested tube: profIni / 3m only (no barrel, no constante)
-  const suggestedTube = profIniVal>0 ? Math.ceil(profIniVal/TUBE) : null;
-  let pAcum=profIniVal,prevN=null,prevSob=sobIniVal,curSob=sobIniVal,actBarrel=barrel,actBLen=bLen;
-  const comp=rows.map(r=>{
-    const nT=parseFloat(r.nTubos),perf=parseFloat(r.perforado)||0;
+  const sobIniVal  = h.sobranteIni!==""&&h.sobranteIni!=null ? parseFloat(h.sobranteIni) : null;
+
+  // N° tubo sugerido = (profIni + constante + sobIni - barrel) / 3
+  const suggestedTube = (profIniVal>0&&cte>0&&sobIniVal!=null) ?
+    Math.round((profIniVal+cte+sobIniVal-bLen)/TUBE) : null;
+
+  // ── LÓGICA DE CÁLCULO ───────────────────────────────────────────
+  // Reglas exactas del cuaderno de campo:
+  // 
+  // Fila con N° tubo:
+  //   T.Tubería = N°tubos × 3 + Barrel
+  //   Sobrante  = T.Tubería - Profundidad - Constante
+  //   (esta fila generalmente no tiene perforado)
+  //
+  // Fila sin N° tubo (corrida):
+  //   Sobrante = Sobrante_anterior - Perforado
+  //   Profundidad = Profundidad_anterior + Perforado
+  //
+  // Inicio de turno nuevo:
+  //   Profundidad y Sobrante vienen del encabezado (turno anterior)
+
+  let profAcum  = profIniVal;
+  let curSob    = sobIniVal;
+  let prevNT    = null;
+  let actBarrel = barrel;
+  let actBLen   = bLen;
+
+  const comp = rows.map((r) => {
+    const nT   = parseFloat(r.nTubos);
+    const perf = parseFloat(r.perforado)||0;
+
+    // Cambio de barrel por fila
     if(r.bov!==""){
-      const nbl=r.bov==="5"?B5:B10;
-      if(nbl!==actBLen&&curSob!=null){curSob=+(curSob+(nbl-actBLen)).toFixed(2);}
-      actBarrel=r.bov;actBLen=nbl;
+      const nbl = r.bov==="5"?B5:B10;
+      if(nbl!==actBLen&&curSob!=null){ curSob=+(curSob+(nbl-actBLen)).toFixed(2); }
+      actBarrel=r.bov; actBLen=nbl;
     }
-    const tub=r.manualTub?parseFloat(r.manualTub):(!isNaN(nT)&&nT>0?+(nT*TUBE+actBLen).toFixed(2):null);
-    // If manual sobrante set, override curSob
-    if(r.manualSob!==""){curSob=parseFloat(r.manualSob);}
-    if(r.nTubos!==""&&r.nTubos!==prevN){
-      const add=(!isNaN(nT)?nT:0)-(parseFloat(prevN)||0);
-      if(prevN===null&&sobIniVal!=null){
-        // Primer tubo del turno - sobrante YA viene del turno anterior, NO tocar
-        curSob=sobIniVal;
-      } else if(prevN!==null){
-        // Cambio de tubo dentro del mismo turno - suma diferencia al sobrante actual
-        curSob=curSob!=null?+(curSob+add*TUBE).toFixed(2):curSob;
-      } else {
-        // Primer turno sin sobranteIni - calcular normalmente
-        curSob=tub!=null?+(tub-cte).toFixed(2):null;
+
+    // T.Tubería = N°tubos × 3 + Barrel (solo cuando hay N° tubo)
+    const tTub = !isNaN(nT)&&nT>0 ? +(nT*TUBE+actBLen).toFixed(2) : null;
+
+    // Cuando cambia N° tubo → recalcular sobrante
+    if(r.nTubos!==""&&r.nTubos!==prevNT){
+      if(tTub!=null){
+        // Sobrante = T.Tubería - Profundidad actual - Constante
+        curSob = +(tTub - profAcum - cte).toFixed(2);
       }
-      prevN=r.nTubos;
+      prevNT = r.nTubos;
     }
-    // If no nTubos but we have sobranteIni, keep using it
-    const sob=curSob!=null&&perf>0?+(curSob-perf).toFixed(2):curSob;
-    if(perf>0)curSob=sob;
-    prevSob=sob;pAcum+=perf;
-    const rec=parseFloat(r.recuperado)||0;
-    const pct=perf>0?Math.min(100,(rec/perf)*100).toFixed(0):null;
-    return{tub,sob,prof:pAcum,pct,perf,actBarrel,needTube:sob!=null&&sob<=0.001&&perf>0};
+
+    // Sobrante y profundidad después de perforar
+    const sobShow  = curSob!=null ? curSob : null;
+    const profShow = profAcum;
+
+    // Actualizar acumulados si hay perforado
+    if(perf>0){
+      curSob   = curSob!=null ? +(curSob-perf).toFixed(2) : null;
+      profAcum = +(profAcum+perf).toFixed(2);
+    }
+
+    const pct = perf>0&&parseFloat(r.recuperado)>0 ?
+      Math.min(100,(parseFloat(r.recuperado)/perf)*100).toFixed(0) : null;
+    const needTube = curSob!=null&&curSob<=0.001&&perf>0;
+
+    return {tTub, sob:sobShow, prof:profShow, pct, perf, actBarrel, needTube};
   });
 
   const totP=comp.reduce((a,c)=>a+c.perf,0);
@@ -272,7 +303,7 @@ export default function App(){
                         <input style={ci(t,{width:44,color:t.blue,fontWeight:700})} type="number" inputMode="decimal"
                           value={r.manualTub} placeholder={c.tub!=null?c.tub.toFixed(2):"52.10"}
                           onChange={e=>upd(r.id,"manualTub",e.target.value)}/>
-                        :<div style={{color:t.blue,fontWeight:700,fontSize:12,padding:"4px"}}>{c.tub!=null?c.tub.toFixed(2):"–"}</div>
+                        :<div style={{color:t.blue,fontWeight:700,fontSize:12,padding:"4px"}}>{c.tTub!=null?c.tTub.toFixed(2):"–"}</div>
                       }
                     </td>
                     <td style={td}><div style={{color:t.blue,fontWeight:800,fontSize:12,padding:"4px"}}>
@@ -281,14 +312,7 @@ export default function App(){
                       value={r.perforado} placeholder="0.00" onChange={e=>upd(r.id,"perforado",e.target.value)}/></td>
                     <td style={td}><input style={ci(t,{width:48})} type="number" inputMode="decimal"
                       value={r.recuperado} placeholder="0.00" onChange={e=>upd(r.id,"recuperado",e.target.value)}/></td>
-                    <td style={td}>
-                      {(sobIniVal!=null&&idx===0)?
-                        <input style={ci(t,{width:44,color:sCol,fontWeight:700})} type="number" inputMode="decimal"
-                          value={r.manualSob} placeholder={c.sob!=null?c.sob.toFixed(2):"2.00"}
-                          onChange={e=>upd(r.id,"manualSob",e.target.value)}/>
-                        :<div style={{color:sCol,fontWeight:700,fontSize:12,padding:"4px"}}>{c.sob!=null?c.sob.toFixed(2):"–"}</div>
-                      }
-                    </td>
+                    <td style={td}><div style={{color:sCol,fontWeight:700,fontSize:12,padding:"4px"}}>{c.sob!=null?c.sob.toFixed(2):"–"}</div></td>
                     <td style={td}><input style={ci(t,{width:52})} value={r.terreno} placeholder="–"
                       onChange={e=>upd(r.id,"terreno",e.target.value)}/></td>
                     <td style={td}><div style={{color:pCol,fontWeight:700,fontSize:12,padding:"4px"}}>
@@ -312,7 +336,7 @@ export default function App(){
                     <td colSpan={12} style={{padding:"2px 8px 5px"}}>
                       <div style={{background:"#1a0808",border:`1px solid ${t.red}`,borderRadius:6,
                         padding:"4px 10px",fontSize:10,color:t.red,fontWeight:600}}>
-                        ⚠️ Sobrante agotado — agregar tubo (+3m → sobrante {(((c.tub||0)+3)-cte).toFixed(2)}m)</div>
+                        ⚠️ Sobrante agotado — agregar tubo (+3m → sobrante {(((c.tTub||0)+3-profAcum-cte)).toFixed(2)}m)</div>
                     </td>
                   </tr>}
                 </>);

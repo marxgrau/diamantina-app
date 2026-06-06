@@ -268,13 +268,13 @@ export default function App(){
                     <td style={td}><div style={{color:t.blue,fontWeight:700,fontSize:12,padding:"4px"}}>
                       {c.tub!=null?c.tub.toFixed(2):"–"}</div></td>
                     <td style={td}><div style={{color:t.blue,fontWeight:800,fontSize:12,padding:"4px"}}>
-                      {c.perf>0?c.prof.toFixed(2):profIniVal>0?profIniVal.toFixed(2):"–"}</div></td>
+                      {c.perf>0?c.prof.toFixed(2):"–"}</div></td>
                     <td style={td}><input style={ci(t,{width:48,color:t.green,fontWeight:700})} type="number" inputMode="decimal"
                       value={r.perforado} placeholder="0.00" onChange={e=>upd(r.id,"perforado",e.target.value)}/></td>
                     <td style={td}><input style={ci(t,{width:48})} type="number" inputMode="decimal"
                       value={r.recuperado} placeholder="0.00" onChange={e=>upd(r.id,"recuperado",e.target.value)}/></td>
                     <td style={td}><div style={{color:sCol,fontWeight:700,fontSize:12,padding:"4px"}}>
-                      {c.sob!=null?c.sob.toFixed(2):sobIniVal!=null?sobIniVal.toFixed(2):"–"}</div></td>
+                      {c.sob!=null?c.sob.toFixed(2):"–"}</div></td>
                     <td style={td}><input style={ci(t,{width:52})} value={r.terreno} placeholder="–"
                       onChange={e=>upd(r.id,"terreno",e.target.value)}/></td>
                     <td style={td}><div style={{color:pCol,fontWeight:700,fontSize:12,padding:"4px"}}>

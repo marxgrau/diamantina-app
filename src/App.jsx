@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 
 const TUBE=3.00, B5=2.60, B10=4.10, KEY="dia_v1";
 let uid=1;
-const row=()=>({id:uid++,nTubos:"",perforado:"",recuperado:"",terreno:"",recFluido:"",bov:"",manualTub:"",manualSob:""});
+const row=()=>({id:uid++,nTubos:"",perforado:"",recuperado:"",terreno:"",recFluido:"",bov:"",manualTub:"",manualSob:"",profManual:""});
 const emptyH={empresa:"",fecha:"",proyecto:"",sondaje:"",maquina:"",ubicacion:"",
   inclinacion:"90",azimut:"",turno:"Día",diametro:"HQ",constante:"",broca:"",brocaSerie:"",
   brocaCodigo:"",brocaDesde:"",brocaHasta:"",rshell:"",rshellSerie:"",rshellCodigo:"",
@@ -107,7 +107,7 @@ export default function App(){
   let actBarrel = barrel;
   let actBLen   = bLen;
 
-  const comp = rows.map((r) => {
+  const comp = rows.map((r, idx) => {
     const nT   = parseFloat(r.nTubos);
     const perf = parseFloat(r.perforado)||0;
 
@@ -132,9 +132,10 @@ export default function App(){
 
     // Sobrante y profundidad después de perforar
     const sobShow  = curSob!=null ? curSob : null;
-    const profShow = profAcum;
+    const profShow = (idx===0&&r.profManual!=="")?parseFloat(r.profManual):profAcum;
 
     // Actualizar acumulados si hay perforado
+    if(idx===0&&r.profManual!==""){profAcum=parseFloat(r.profManual);}
     if(perf>0){
       curSob   = curSob!=null ? +(curSob-perf).toFixed(2) : null;
       profAcum = +(profAcum+perf).toFixed(2);
@@ -144,7 +145,7 @@ export default function App(){
       Math.min(100,(parseFloat(r.recuperado)/perf)*100).toFixed(0) : null;
     const needTube = curSob!=null&&curSob<=0.001&&perf>0;
 
-    return {tTub, sob:sobShow, prof:profShow, pct, perf, actBarrel, needTube};
+    return {tTub, sob:sobShow, prof:profShow, pct, perf, actBarrel, needTube, isFirst:idx===0};
   });
 
   const totP=comp.reduce((a,c)=>a+c.perf,0);
@@ -307,12 +308,22 @@ export default function App(){
                       }
                     </td>
                     <td style={td}><div style={{color:t.blue,fontWeight:800,fontSize:12,padding:"4px"}}>
-                      {c.sob!=null||c.perf>0||c.tTub!=null?c.prof.toFixed(2):"–"}</div></td>
+                      {idx===0?(
+                        <input style={ci(t,{width:46,color:t.blue,fontWeight:700})}
+                          type="number" inputMode="decimal"
+                          value={r.profManual}
+                          placeholder={profIniVal>0?profIniVal.toFixed(2):"0.00"}
+                          onChange={e=>upd(r.id,"profManual",e.target.value)}/>
+                      ):(
+                        <div style={{color:t.blue,fontWeight:700,fontSize:12,padding:"4px"}}>
+                          {c.perf>0||c.tTub!=null?c.prof.toFixed(2):"–"}
+                        </div>
+                      )}</td>
                     <td style={td}><input style={ci(t,{width:48,color:t.green,fontWeight:700})} type="number" inputMode="decimal"
                       value={r.perforado} placeholder="0.00" onChange={e=>upd(r.id,"perforado",e.target.value)}/></td>
                     <td style={td}><input style={ci(t,{width:48})} type="number" inputMode="decimal"
                       value={r.recuperado} placeholder="0.00" onChange={e=>upd(r.id,"recuperado",e.target.value)}/></td>
-                    <td style={td}><div style={{color:sCol,fontWeight:700,fontSize:12,padding:"4px"}}>{c.sob!=null?c.sob.toFixed(2):"–"}</div></td>
+                    <td style={td}><div style={{color:sCol,fontWeight:700,fontSize:12,padding:"4px"}}>{c.sob!=null?c.sob.toFixed(2):(c.isFirst&&sobIniVal!=null?sobIniVal.toFixed(2):"–")}</div></td>
                     <td style={td}><input style={ci(t,{width:52})} value={r.terreno} placeholder="–"
                       onChange={e=>upd(r.id,"terreno",e.target.value)}/></td>
                     <td style={td}><div style={{color:pCol,fontWeight:700,fontSize:12,padding:"4px"}}>

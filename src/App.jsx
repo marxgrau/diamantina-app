@@ -130,12 +130,14 @@ export default function App(){
       prevNT = r.nTubos;
     }
 
-    // Sobrante y profundidad después de perforar
-    const sobShow  = curSob!=null ? curSob : null;
-    const profShow = (idx===0&&r.profManual!=="")?parseFloat(r.profManual):profAcum;
-
-    // Actualizar acumulados si hay perforado
+    // Actualizar profAcum si primera fila tiene profManual
     if(idx===0&&r.profManual!==""){profAcum=parseFloat(r.profManual);}
+
+    // Sobrante y profundidad ANTES de perforar esta corrida
+    const sobShow  = curSob!=null ? curSob : null;
+    const profShow = profAcum;
+
+    // Actualizar acumulados DESPUÉS de guardar profShow
     if(perf>0){
       curSob   = curSob!=null ? +(curSob-perf).toFixed(2) : null;
       profAcum = +(profAcum+perf).toFixed(2);
@@ -300,12 +302,9 @@ export default function App(){
                     <td style={td}><input style={ci(t,{width:42})} type="number" inputMode="numeric"
                       value={r.nTubos} placeholder="–" onChange={e=>upd(r.id,"nTubos",e.target.value)}/></td>
                     <td style={td}>
-                      {(sobIniVal!=null&&idx===0)?
-                        <input style={ci(t,{width:44,color:t.blue,fontWeight:700})} type="number" inputMode="decimal"
-                          value={r.manualTub} placeholder={c.tub!=null?c.tub.toFixed(2):"52.10"}
-                          onChange={e=>upd(r.id,"manualTub",e.target.value)}/>
-                        :<div style={{color:t.blue,fontWeight:700,fontSize:12,padding:"4px"}}>{c.tTub!=null?c.tTub.toFixed(2):"–"}</div>
-                      }
+                      <div style={{color:t.blue,fontWeight:700,fontSize:12,padding:"4px"}}>
+                        {r.nTubos!==""&&c.tTub!=null?c.tTub.toFixed(2):"–"}
+                      </div>
                     </td>
                     <td style={td}><div style={{color:t.blue,fontWeight:800,fontSize:12,padding:"4px"}}>
                       {idx===0?(
@@ -316,7 +315,7 @@ export default function App(){
                           onChange={e=>upd(r.id,"profManual",e.target.value)}/>
                       ):(
                         <div style={{color:t.blue,fontWeight:700,fontSize:12,padding:"4px"}}>
-                          {c.perf>0||c.tTub!=null?c.prof.toFixed(2):"–"}
+                          {c.perf>0?c.prof.toFixed(2):"–"}
                         </div>
                       )}</td>
                     <td style={td}><input style={ci(t,{width:48,color:t.green,fontWeight:700})} type="number" inputMode="decimal"

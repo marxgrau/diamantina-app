@@ -80,9 +80,8 @@ export default function App(){
   // ── Compute rows ───────────────────────────────────────────────────
   const profIniVal = parseFloat(h.profIni)||0;
   const sobIniVal = parseFloat(h.sobranteIni)||null;
-  // Suggested tube number for new shift
-  const suggestedTube = (profIniVal>0&&sobIniVal!=null&&cte>0)?
-    Math.ceil((profIniVal+sobIniVal+cte-(barrel==="5"?B5:B10))/TUBE) : null;
+  // Suggested tube: profIni / 3m only (no barrel, no constante)
+  const suggestedTube = profIniVal>0 ? Math.ceil(profIniVal/TUBE) : null;
   let pAcum=profIniVal,prevN=null,prevSob=sobIniVal,curSob=sobIniVal,actBarrel=barrel,actBLen=bLen;
   const comp=rows.map(r=>{
     const nT=parseFloat(r.nTubos),perf=parseFloat(r.perforado)||0;
@@ -94,7 +93,12 @@ export default function App(){
     const tub=!isNaN(nT)&&nT>0?+(nT*TUBE+actBLen).toFixed(2):null;
     if(r.nTubos!==""&&r.nTubos!==prevN){
       const add=(!isNaN(nT)?nT:0)-(parseFloat(prevN)||0);
-      curSob=prevSob!=null?+(prevSob+add*TUBE).toFixed(2):(tub!=null?+(tub-cte).toFixed(2):null);
+      if(prevN===null&&sobIniVal!=null){
+        // Primer tubo del nuevo turno - sobrante viene del turno anterior, no recalcular
+        curSob=sobIniVal;
+      } else {
+        curSob=prevSob!=null?+(prevSob+add*TUBE).toFixed(2):(tub!=null?+(tub-cte).toFixed(2):null);
+      }
       prevN=r.nTubos;
     }
     // If no nTubos but we have sobranteIni, keep using it

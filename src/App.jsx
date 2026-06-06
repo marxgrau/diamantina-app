@@ -94,10 +94,14 @@ export default function App(){
     if(r.nTubos!==""&&r.nTubos!==prevN){
       const add=(!isNaN(nT)?nT:0)-(parseFloat(prevN)||0);
       if(prevN===null&&sobIniVal!=null){
-        // Primer tubo del nuevo turno - sobrante viene del turno anterior, no recalcular
+        // Primer tubo del turno - sobrante YA viene del turno anterior, NO tocar
         curSob=sobIniVal;
+      } else if(prevN!==null){
+        // Cambio de tubo dentro del mismo turno - suma/resta diferencia
+        curSob=prevSob!=null?+(prevSob+add*TUBE).toFixed(2):curSob;
       } else {
-        curSob=prevSob!=null?+(prevSob+add*TUBE).toFixed(2):(tub!=null?+(tub-cte).toFixed(2):null);
+        // Primer turno sin sobranteIni - calcular normalmente
+        curSob=tub!=null?+(tub-cte).toFixed(2):null;
       }
       prevN=r.nTubos;
     }

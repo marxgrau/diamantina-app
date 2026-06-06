@@ -307,7 +307,7 @@ export default function App(){
                       }
                     </td>
                     <td style={td}><div style={{color:t.blue,fontWeight:800,fontSize:12,padding:"4px"}}>
-                      {c.perf>0?c.prof.toFixed(2):"–"}</div></td>
+                      {c.sob!=null||c.perf>0||c.tTub!=null?c.prof.toFixed(2):"–"}</div></td>
                     <td style={td}><input style={ci(t,{width:48,color:t.green,fontWeight:700})} type="number" inputMode="decimal"
                       value={r.perforado} placeholder="0.00" onChange={e=>upd(r.id,"perforado",e.target.value)}/></td>
                     <td style={td}><input style={ci(t,{width:48})} type="number" inputMode="decimal"

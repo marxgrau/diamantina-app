@@ -8,7 +8,7 @@ const emptyH={empresa:"",fecha:"",proyecto:"",sondaje:"",maquina:"",ubicacion:""
   brocaCodigo:"",brocaDesde:"",brocaHasta:"",rshell:"",rshellSerie:"",rshellCodigo:"",
   rshellDesde:"",rshellHasta:"",zapata:"",mtsProgram:"",horometroIni:"",horometroFin:"",
   combustible:"",agua:"",aditivo1:"",aditivo1Cant:"",aditivo2:"",aditivo2Cant:"",
-  profIni:"",observaciones:"",supervisor:"",perforista:"",ayudante1:"",ayudante2:"",casingDiam:"",casingDesde:"",casingHasta:"",dt:Array(20).fill("")};
+  profIni:"",sobranteIni:"",observaciones:"",supervisor:"",perforista:"",ayudante1:"",ayudante2:"",casingDiam:"",casingDesde:"",casingHasta:"",dt:Array(20).fill("")};
 const DT=["Perforado con broca","Perforado con tricono","Inspección equipo - Charla",
   "Mantenimiento y reparación","Traslado, Instalación, Desinstalación de máquina",
   "Instalación, retiro de casing en cambio de línea","Rimado con protección de casing",
@@ -78,7 +78,12 @@ export default function App(){
   const reset=()=>{if(window.confirm("¿Limpiar todo?")){uid=1;setH(emptyH);setRows([row(),row(),row()]);setBarrel("5");setTab("calc");}};
 
   // ── Compute rows ───────────────────────────────────────────────────
-  let pAcum=0,prevN=null,prevSob=null,curSob=null,actBarrel=barrel,actBLen=bLen;
+  const profIniVal = parseFloat(h.profIni)||0;
+  const sobIniVal = parseFloat(h.sobranteIni)||null;
+  // Suggested tube number for new shift
+  const suggestedTube = (profIniVal>0&&sobIniVal!=null&&cte>0)?
+    Math.ceil((profIniVal+sobIniVal+cte-(barrel==="5"?B5:B10))/TUBE) : null;
+  let pAcum=profIniVal,prevN=null,prevSob=sobIniVal,curSob=sobIniVal,actBarrel=barrel,actBLen=bLen;
   const comp=rows.map(r=>{
     const nT=parseFloat(r.nTubos),perf=parseFloat(r.perforado)||0;
     if(r.bov!==""){
@@ -92,6 +97,7 @@ export default function App(){
       curSob=prevSob!=null?+(prevSob+add*TUBE).toFixed(2):(tub!=null?+(tub-cte).toFixed(2):null);
       prevN=r.nTubos;
     }
+    // If no nTubos but we have sobranteIni, keep using it
     const sob=curSob!=null&&perf>0?+(curSob-perf).toFixed(2):curSob;
     if(perf>0)curSob=sob;
     prevSob=sob;pAcum+=perf;
@@ -199,7 +205,7 @@ export default function App(){
             {[["sondaje","Sondaje","506-62",1],["maquina","N° Máquina","ED20-08",1],
               ["proyecto","Proyecto","Cerro Verde",2],["ubicacion","Ubicación","Santa Rosa 9",2],
               ["fecha","Fecha","",1,"date"],["turno","Turno","",1,"sel"],["diametro","Diámetro Tubería","",1,"diam"],
-              ["mtsProgram","Mts Program.","",1],["profIni","Prof. Inicio Turno (m)","",1],["constante","Constante (m)","1.60",1],
+              ["mtsProgram","Mts Program.","",1],["profIni","Prof. Inicio Turno (m)","",1],["sobranteIni","Sobrante Inicial (m)","",1],["constante","Constante (m)","1.60",1],
               ["inclinacion","Inclinación°","90",1],["azimut","Azimut°","000",1],
               ["broca","Broca","HA-111492",1],["rshell","R. Shell","61-7205",1],
               ["zapata","Zapata","553185",1],["casingDiam","Casing Ø","HWT",1,"casingsel"],["casingDesde","Casing Desde","",1],["casingHasta","Casing Hasta","",1],
@@ -254,13 +260,13 @@ export default function App(){
                     <td style={td}><div style={{color:t.blue,fontWeight:700,fontSize:12,padding:"4px"}}>
                       {c.tub!=null?c.tub.toFixed(2):"–"}</div></td>
                     <td style={td}><div style={{color:t.blue,fontWeight:800,fontSize:12,padding:"4px"}}>
-                      {c.perf>0?c.prof.toFixed(2):"–"}</div></td>
+                      {c.perf>0?c.prof.toFixed(2):profIniVal>0?profIniVal.toFixed(2):"–"}</div></td>
                     <td style={td}><input style={ci(t,{width:48,color:t.green,fontWeight:700})} type="number" inputMode="decimal"
                       value={r.perforado} placeholder="0.00" onChange={e=>upd(r.id,"perforado",e.target.value)}/></td>
                     <td style={td}><input style={ci(t,{width:48})} type="number" inputMode="decimal"
                       value={r.recuperado} placeholder="0.00" onChange={e=>upd(r.id,"recuperado",e.target.value)}/></td>
                     <td style={td}><div style={{color:sCol,fontWeight:700,fontSize:12,padding:"4px"}}>
-                      {c.sob!=null?c.sob.toFixed(2):"–"}</div></td>
+                      {c.sob!=null?c.sob.toFixed(2):sobIniVal!=null?sobIniVal.toFixed(2):"–"}</div></td>
                     <td style={td}><input style={ci(t,{width:52})} value={r.terreno} placeholder="–"
                       onChange={e=>upd(r.id,"terreno",e.target.value)}/></td>
                     <td style={td}><div style={{color:pCol,fontWeight:700,fontSize:12,padding:"4px"}}>
@@ -464,9 +470,9 @@ export default function App(){
                 <tbody>
                   {[
                     ["1. Profundidad al inicio del turno:",h.diametro||"HQ",h.profIni?h.profIni+" mt":""],
-                    ["2. Profundidad al final del turno:",h.diametro||"HQ",totP>0?totP.toFixed(2)+" mt":""],
+                    ["2. Profundidad al final del turno:",h.diametro||"HQ",(profIniVal+totP)>0?(profIniVal+totP).toFixed(2)+" mt":""],
                     ["3. Sobrante al final del turno:",h.diametro||"HQ",comp[comp.length-1]?.sob!=null?comp[comp.length-1].sob.toFixed(2)+" mt":""],
-                    ["4. Longitud de tubería al final del turno:",h.diametro||"HQ",(()=>{const lastSob=comp[comp.length-1]?.sob;return (totP>0&&lastSob!=null&&cte>0)?+(totP+lastSob+cte).toFixed(2)+" mt":""})()],
+                    ["4. Longitud de tubería al final del turno:",h.diametro||"HQ",(()=>{const lastSob=comp[comp.length-1]?.sob;return (totP>0&&lastSob!=null&&cte>0)?+(profIniVal+totP+lastSob+cte).toFixed(2)+" mt":""})()],
                     ["5. Metros perforados:",h.diametro||"HQ",totP.toFixed(2)+" mt"],
                     ["6. Muestra recuperada:",h.diametro||"HQ",totR.toFixed(2)+" mt"],
                   ].map(([d,o,v],i)=>(

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 
 const TUBE=3.00, B5=2.60, B10=4.10, KEY="dia_v1";
 let uid=1;
-const row=()=>({id:uid++,nTubos:"",perforado:"",recuperado:"",terreno:"",recFluido:"",bov:""});
+const row=()=>({id:uid++,nTubos:"",perforado:"",recuperado:"",terreno:"",recFluido:"",bov:"",manualTub:"",manualSob:""});
 const emptyH={empresa:"",fecha:"",proyecto:"",sondaje:"",maquina:"",ubicacion:"",
   inclinacion:"90",azimut:"",turno:"Día",diametro:"HQ",constante:"",broca:"",brocaSerie:"",
   brocaCodigo:"",brocaDesde:"",brocaHasta:"",rshell:"",rshellSerie:"",rshellCodigo:"",
@@ -90,7 +90,9 @@ export default function App(){
       if(nbl!==actBLen&&curSob!=null){curSob=+(curSob+(nbl-actBLen)).toFixed(2);}
       actBarrel=r.bov;actBLen=nbl;
     }
-    const tub=!isNaN(nT)&&nT>0?+(nT*TUBE+actBLen).toFixed(2):null;
+    const tub=r.manualTub?parseFloat(r.manualTub):(!isNaN(nT)&&nT>0?+(nT*TUBE+actBLen).toFixed(2):null);
+    // If manual sobrante set, override curSob
+    if(r.manualSob!==""){curSob=parseFloat(r.manualSob);}
     if(r.nTubos!==""&&r.nTubos!==prevN){
       const add=(!isNaN(nT)?nT:0)-(parseFloat(prevN)||0);
       if(prevN===null&&sobIniVal!=null){
@@ -265,16 +267,28 @@ export default function App(){
                       padding:"2px 6px",fontSize:10,fontWeight:700}}>{idx}</span></td>
                     <td style={td}><input style={ci(t,{width:42})} type="number" inputMode="numeric"
                       value={r.nTubos} placeholder="–" onChange={e=>upd(r.id,"nTubos",e.target.value)}/></td>
-                    <td style={td}><div style={{color:t.blue,fontWeight:700,fontSize:12,padding:"4px"}}>
-                      {c.tub!=null?c.tub.toFixed(2):"–"}</div></td>
+                    <td style={td}>
+                      {(sobIniVal!=null&&idx===0)?
+                        <input style={ci(t,{width:44,color:t.blue,fontWeight:700})} type="number" inputMode="decimal"
+                          value={r.manualTub} placeholder={c.tub!=null?c.tub.toFixed(2):"52.10"}
+                          onChange={e=>upd(r.id,"manualTub",e.target.value)}/>
+                        :<div style={{color:t.blue,fontWeight:700,fontSize:12,padding:"4px"}}>{c.tub!=null?c.tub.toFixed(2):"–"}</div>
+                      }
+                    </td>
                     <td style={td}><div style={{color:t.blue,fontWeight:800,fontSize:12,padding:"4px"}}>
                       {c.perf>0?c.prof.toFixed(2):"–"}</div></td>
                     <td style={td}><input style={ci(t,{width:48,color:t.green,fontWeight:700})} type="number" inputMode="decimal"
                       value={r.perforado} placeholder="0.00" onChange={e=>upd(r.id,"perforado",e.target.value)}/></td>
                     <td style={td}><input style={ci(t,{width:48})} type="number" inputMode="decimal"
                       value={r.recuperado} placeholder="0.00" onChange={e=>upd(r.id,"recuperado",e.target.value)}/></td>
-                    <td style={td}><div style={{color:sCol,fontWeight:700,fontSize:12,padding:"4px"}}>
-                      {c.sob!=null?c.sob.toFixed(2):"–"}</div></td>
+                    <td style={td}>
+                      {(sobIniVal!=null&&idx===0)?
+                        <input style={ci(t,{width:44,color:sCol,fontWeight:700})} type="number" inputMode="decimal"
+                          value={r.manualSob} placeholder={c.sob!=null?c.sob.toFixed(2):"2.00"}
+                          onChange={e=>upd(r.id,"manualSob",e.target.value)}/>
+                        :<div style={{color:sCol,fontWeight:700,fontSize:12,padding:"4px"}}>{c.sob!=null?c.sob.toFixed(2):"–"}</div>
+                      }
+                    </td>
                     <td style={td}><input style={ci(t,{width:52})} value={r.terreno} placeholder="–"
                       onChange={e=>upd(r.id,"terreno",e.target.value)}/></td>
                     <td style={td}><div style={{color:pCol,fontWeight:700,fontSize:12,padding:"4px"}}>
